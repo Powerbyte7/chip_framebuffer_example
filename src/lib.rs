@@ -38,11 +38,13 @@ fn draw_line(chip: &Chip, row: u32, color: u32) {
     }
 }
 
-pub unsafe fn on_timer_fired(user_data: *const c_void) {
-    let mut chip = &mut CHIP_VEC[user_data as usize];
+pub extern "C" fn on_timer_fired(user_data: *mut c_void) {
+    let chip = unsafe { &mut CHIP_VEC[user_data as usize] };
 
     if chip.current_row == 0 {
-        debugPrint(CString::new("First row!").unwrap().into_raw());
+        unsafe {
+            debugPrint(CString::new("First row!").unwrap().into_raw());
+        }
     }
 
     draw_line(chip, chip.current_row, DEEP_GREEN);
@@ -73,7 +75,7 @@ pub unsafe extern "C" fn chipInit() {
 
     let timer_config = TimerConfig {
         user_data: (CHIP_VEC.len() - 1) as *const c_void,
-        callback: on_timer_fired as *const c_void,
+        callback: on_timer_fired,
     };
 
     let timer = timerInit(&timer_config);
